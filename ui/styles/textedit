@@ -1,0 +1,25 @@
+QTextEdit{
+color:#B3B3B3;
+background:#0E1015;
+border:1px solid #2F3239;
+border-radius:2px;
+selection-background-color:#787878;
+font-family:Microsoft YaHei;
+font:15px;
+padding-bottom:1px;
+}
+QTextEdit:hover{
+color:#FFF;
+background:#0E1015;
+border-color:#45494F;
+}
+QTextEdit:focus{
+color:#FFF;
+background:#0B0D11;
+border-color:#1E5F99;
+}
+QTextEdit:disabled{
+color:rgba(0,0,0,0%);
+background:rgba(0,0,0,0%);
+border:0px;
+}

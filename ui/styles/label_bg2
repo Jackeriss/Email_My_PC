@@ -1,0 +1,5 @@
+QLabel{
+background:#12161C;
+border:0px;
+border-bottom:1px solid #21252A;
+}

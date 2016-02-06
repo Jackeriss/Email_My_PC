@@ -1,0 +1,38 @@
+QCheckBox{
+spacing:10px;
+color:#B3B3B3;
+border:0px;
+font-family:Microsoft YaHei;
+font:13px;
+}
+QCheckBox:disabled{
+color:#45494f;
+}
+QCheckBox::indicator{
+  width: 20px;
+  height: 20px;
+}
+QCheckBox::indicator:unchecked{
+  image: url(ui/images/unchecked.png);
+}
+QCheckBox::indicator:unchecked:hover{
+  image: url(ui/images/unchecked_hover.png);
+}
+QCheckBox::indicator:unchecked:pressed{
+  image: url(ui/images/unchecked_down.png);
+}
+QCheckBox::indicator:checked{
+  image: url(ui/images/checked.png);
+}
+QCheckBox::indicator:checked:hover {
+  image: url(ui/images/checked_hover.png);
+}
+QCheckBox::indicator:checked:pressed{
+  image: url(ui/images/checked_down.png);
+}
+QCheckBox::indicator:unchecked:disabled{
+  image: url(ui/images/check_disabled.png);
+}
+QCheckBox::indicator:checked:disabled{
+  image: url(ui/images/check_disabled.png);
+}

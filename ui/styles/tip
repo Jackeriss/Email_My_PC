@@ -1,0 +1,8 @@
+QLabel{
+background:url(ui/images/tip.png);
+}
+QToolTip{
+border:0px;
+background:#272E3B;
+color:#B3B3B3;
+}

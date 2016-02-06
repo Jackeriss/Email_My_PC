@@ -1,0 +1,18 @@
+QCheckBox{
+border:0px;
+}
+QCheckBox::indicator{
+  width:79px;
+  height:34px;
+}
+QCheckBox::indicator:unchecked{
+  image:url(ui/images/off.png);
+}
+
+QCheckBox::indicator:checked{
+  image:url(ui/images/on.png);
+}
+
+QCheckBox::indicator:unchecked:disabled{
+  image:url(ui/images/off_disabled.png);
+}

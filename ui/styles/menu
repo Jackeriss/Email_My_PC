@@ -1,0 +1,17 @@
+QMenu
+{
+background:#282f3c;
+width:130px;
+font:13px;
+border:1px solid #3c424e;
+}
+QMenu::item
+{
+background: transparent;
+color:#b2b2b2;
+}
+QMenu::item:selected
+{
+background:#323945;
+color:#fff;
+}

@@ -1,0 +1,11 @@
+QPushButton
+{
+	background-image:url(ui/images/btn_manu3.png);
+	border:0px;
+	font-family:Microsoft YaHei;
+	font:13px
+}
+QPushButton:disabled
+{
+	background-image:url(ui/images/btn_manu3.png);
+}
