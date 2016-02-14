@@ -7,6 +7,7 @@ import ConfigParser
 import poplib
 import subprocess
 import pythoncom
+from singleinstance import singleinstance
 from email.parser import Parser
 from email.header import decode_header
 from email.utils import parseaddr
@@ -1607,4 +1608,8 @@ def main():
 	form = Setting_UI()
 	sys.exit(app.exec_())
 if __name__ == '__main__':
-	main()
+	myapp = singleinstance()
+	if myapp.aleradyrunning():
+		sys.exit(0)
+	else:
+		 main()
