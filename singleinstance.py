@@ -2,8 +2,8 @@ from win32event import CreateMutex
 from win32api import CloseHandle, GetLastError
 from winerror import ERROR_ALREADY_EXISTS
 
+#限制只能同时运行一个Email My PC程序
 class singleinstance:
-    """ Limits application to single instance """
 
     def __init__(self):
         self.mutexname = "testmutex_{D0E858DF-985E-4907-B7FB-8D732C3FC3B9}"

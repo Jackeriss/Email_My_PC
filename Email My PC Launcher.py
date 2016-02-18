@@ -6,10 +6,13 @@ import socket
 import urllib2
 import ConfigParser
 from send import *
+
+#开机启动本程序，发送开机启动邮件后将启动Email My PC本体，并关闭本程序
 def main():
 	config = ConfigParser.ConfigParser()
 	config.read("config.ini")
 	smtpserver = config.get("mail", "smtpserver")
+	smtpport = config.get("mail", "smtpport")
 	user = config.get("mail", "user")
 	passwd = config.get("mail", "passwd")
 	autostart = config.get("settings", "autostart")
@@ -33,13 +36,14 @@ def main():
 				location = info_list[1]
 				location = location[6:]
 				title = "您的电脑当前有开机动作！"
-				message = "电脑名称：%s\n开机时间：%s\nIP地址：%s\n地理位置：%s" % (pc_name, current_time, ip, location.decode("gb2312").encode("utf8"))
-				send(smtpserver, user, passwd, title = title, msg = message)
+				message = "<p>电脑名称：%s</p><p>开机时间：%s</p><p>IP地址：%s</p><p>地理位置：%s</p>" % (pc_name, current_time, ip, location.decode("gb2312").encode("utf8"))
+				send(smtpserver, smtpport, user, passwd, title = title, msg = message)
 	try:
 		os.startfile("Email My PC.exe")
 	except:
 		pass
 	finally:
 		sys.exit()
+
 if __name__ == '__main__':
 	main()

@@ -20,10 +20,13 @@ from PIL.ImageQt import ImageQt
 from PIL import ImageGrab
 from send import *
 
+#摄像头画面预览
 class Cam(QThread):
 	trigger = pyqtSignal()
+
 	def __init__(self, parent = None):
 		super(Cam, self).__init__(parent)
+
 	def run(self):
 		global img
 		while cam_open == True:
@@ -34,10 +37,13 @@ class Cam(QThread):
 			except:
 				pass
 
+#淡入提示文字
 class In(QThread):
 	trigger = pyqtSignal()
+
 	def __init__(self, parent = None):
 		super(In, self).__init__(parent)
+
 	def run(self):
 		global opacity
 		for i in range(opacity, -1, -1):
@@ -45,11 +51,13 @@ class In(QThread):
 			time.sleep(0.01)
 			self.trigger.emit()
 
-
+#淡入淡出提示文字
 class Trans(QThread):
 	trigger = pyqtSignal()
+
 	def __init__(self, parent = None):
 		super(Trans, self).__init__(parent)
+
 	def run(self):
 		global opacity, new_trans
 		for i in range(opacity, -1, -1):
@@ -66,36 +74,42 @@ class Trans(QThread):
 			self.trigger.emit()
 		new_trans = False
 
+#新邮件检测与命令执行
 class Server(QThread):
-	trigger = pyqtSignal()
+	trigger1 = pyqtSignal()
+	trigger2 = pyqtSignal()
+	trigger3 = pyqtSignal()
+	trigger4 = pyqtSignal()
+	trigger5 = pyqtSignal()
+	trigger6 = pyqtSignal()
+	trigger7 = pyqtSignal()
+
 	def __init__(self, parent = None):
 		super(Server, self).__init__(parent)
+
 	def run(self):
-		global exception_id, switch_cam
+		global content
 		p = None
-		exception_id = -1
 		count = 0
 		pre_number = -1
 		while 1:
 			if service == True:
 				try:
 					if count == 0:
-						if exception_id != 0:
-							exception_id = 0
-							self.trigger.emit()
-					p = poplib.POP3(popserver)
+						self.trigger1.emit()
+					#绝大多数邮箱不开启加密时的POP端口为110
+					if popport == "110":
+						p = poplib.POP3(popserver, popport)
+					else:
+						p = poplib.POP3_SSL(popserver, popport)
 				except:
-					if exception_id != 1:
-						exception_id = 1
-						self.trigger.emit()
+					self.trigger2.emit()
 				else:
 					try:
 						p.user(user)
 						p.pass_(passwd)
 					except:
-						if exception_id != 2:
-							exception_id = 2
-							self.trigger.emit()
+						self.trigger3.emit()
 					else:
 						try:
 							resp, mails, octets = p.list()
@@ -108,50 +122,43 @@ class Server(QThread):
 									info = get_info(msg)
 									subject = info[0]
 									addr = info[1]
-									content = info[2].encode('gbk')
+									content = info[2]
 									if filterlist == "0" or (filterlist == "1" and not addr in blacklist) or \
 									(filterlist == "2" and addr in whitelist):
 										if tag_shutdown in subject:
 											command = "shutdown -s"
 											subprocess.Popen('shutdown -s', shell=True)
 											title = "已成功执行关机命令！"
-											send(smtpserver, user, passwd, title = title)
+											send(smtpserver, smtpport, user, passwd, title = title)
 										if tag_screen in subject:
 											pic_name = time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
 											pic_name = pic_name + ".jpg"
 											pic = ImageGrab.grab()
 											pic.save('%s' % pic_name)
 											title = "截屏成功！"
-											send(smtpserver, user, passwd, title = title, file_name = pic_name)
+											send(smtpserver, smtpport, user, passwd, title = title, file_name = pic_name)
 										if tag_cam in subject:
 											pic_name = time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
 											pic_name = pic_name + ".jpg"
 											cam[cam_no].getImage().save(pic_name)
 											title = "拍照成功！"
-											send(smtpserver, user, passwd, title = title, file_name = pic_name)
-											switch_cam = True
-											self.trigger.emit()
+											send(smtpserver, smtpport, user, passwd, title = title, file_name = pic_name)
+											self.trigger6.emit()
 										if tag_say in subject:
-											speak_file = open("speak.vbs", "w")
-											speak_file.write('CreateObject("SAPI.SpVoice").Speak "%s"' % content)
-											speak_file.flush()
-											speak_file.close()
-											os.startfile("speak.vbs")
 											title = "已转达你所说的话！"
-											send(smtpserver, user, passwd, title = title)
+											msg = "<p>已转达你所说的：</p><p>%s</p>" % content.encode("utf8")
+											send(smtpserver, smtpport, user, passwd, title = title, msg = msg)
+											self.trigger7.emit()
 										if tag_cmd in subject:
 											subprocess.Popen(content, shell=True)
 											title = "成功执行CMD命令！"
-											send(smtpserver, user, passwd, title = title)
+											msg = "<p>已成功执行命令：</p><p>%s</p>" % content.encode("utf8")
+											send(smtpserver, smtpport, user, passwd, title = title, msg = msg)
 						except:
-							if exception_id != 3:
-								exception_id = 3
-								self.trigger.emit()
+							self.trigger4.emit()
 						else:
 							if pre_number == -1:
-								if exception_id != 4:
-									exception_id = 4
-									self.trigger.emit()
+								self.trigger5.emit()
 							pre_number = number
 						finally:
 							p.quit()
@@ -160,16 +167,19 @@ class Server(QThread):
 				count = 0
 				exception_id = -1
 				pre_number = -1
+				time.sleep(2)
 			time.sleep(float(sleep))
 
+#主界面
 class Setting_UI(QWidget):
 	def __init__(self, parent = None):
-		global cam, cam_no, cam_open, service, opacity, current_page, new_trans
+		global cam, cam_no, cam_open, opacity, current_page, new_trans
 		cam_open = False
 		self.dragPosition = None
 		current_page = 1
 		new_trans = False
 		super(Setting_UI, self).__init__(parent)
+		#载入样式文件
 		close_qss_file = open(unicode("ui/styles/btn_close", "utf8"), "r")
 		close_qss = close_qss_file.read()
 		close_qss_file.close()
@@ -233,6 +243,7 @@ class Setting_UI(QWidget):
 		on_off_qss_file = open(unicode("ui/styles/on_off", "utf8"), "r")
 		on_off_qss = on_off_qss_file.read()
 		on_off_qss_file.close()
+		#初始化组件
 		self.btn_close = QPushButton()
 		self.btn_menu1 = QPushButton()
 		self.btn_menu2 = QPushButton()
@@ -245,8 +256,12 @@ class Setting_UI(QWidget):
 		self.btn_save = QPushButton()
 		self.lineedit1_1 = QLineEdit(popserver)
 		self.lineedit1_1.setTextMargins(6, 0, 6, 0)
+		self.lineedit1_1_a = QLineEdit(popport)
+		self.lineedit1_1_a.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_2 = QLineEdit(smtpserver)
 		self.lineedit1_2.setTextMargins(6, 0, 6, 0)
+		self.lineedit1_2_a = QLineEdit(smtpport)
+		self.lineedit1_2_a.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_3 = QLineEdit(user)
 		self.lineedit1_3.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_4 = QLineEdit(passwd)
@@ -266,22 +281,21 @@ class Setting_UI(QWidget):
 		self.lineedit2_4.setTextMargins(6, 0, 6, 0)
 		self.lineedit2_5 = QLineEdit(tag_cmd)
 		self.lineedit2_5.setTextMargins(6, 0, 6, 0)
+		#用setToolTip设置提示
 		self.tip1_1 = QLabel()
-		self.tip1_1.setToolTip(u'<p>请先保证你的邮箱已开启POP3服务（开启方法见「说明书」）QQ邮箱的POP3'
-			u'服务器是pop.qq.com，163邮箱的POP3服务器是pop.163.com，<br>其他邮箱请自行查询。</p>')
+		self.tip1_1.setToolTip(u'<p>此处内容请参考说明书。</p>')
 		self.tip1_1.setCursor(QCursor(Qt.PointingHandCursor))
 		self.tip1_1.setStyleSheet(tip_qss)
 		self.tip1_1.setParent(self)
 		self.tip1_1.setGeometry(530, 118, 14, 14)
 		self.tip1_2 = QLabel()
-		self.tip1_2.setToolTip(u'<p>请先保证你的邮箱已开启SMTP服务（开启方法见「说明书」）QQ邮箱的SMTP'
-			u'服务器是smtp.qq.com，163邮箱的SMTP服务器是smtp.163.com，<br>其他邮箱请自行查询。</p>')
+		self.tip1_2.setToolTip(u'<p>此处内容请参考说明书。</p>')
 		self.tip1_2.setCursor(QCursor(Qt.PointingHandCursor))
 		self.tip1_2.setStyleSheet(tip_qss)
 		self.tip1_2.setParent(self)
 		self.tip1_2.setGeometry(530, 167, 14, 14)
 		self.tip1_3 = QLabel()
-		self.tip1_3.setToolTip(u'<p>通常是整个邮箱地址，也有可能只是@前的部分。</p>')
+		self.tip1_3.setToolTip(u'<p>支持域名邮箱。</p>')
 		self.tip1_3.setCursor(QCursor(Qt.PointingHandCursor))
 		self.tip1_3.setStyleSheet(tip_qss)
 		self.tip1_3.setParent(self)
@@ -301,15 +315,13 @@ class Setting_UI(QWidget):
 		self.tip1_5.setParent(self)
 		self.tip1_5.setGeometry(385, 335, 14, 14)
 		self.tip2_1 = QLabel()
-		self.tip2_1.setToolTip(u'<p>将标签作为邮件的标题，将想说的话作为邮件的正文，不要夹杂其他的内容。'
-			u'</p>')
+		self.tip2_1.setToolTip(u'<p>将标签作为邮件的标题，将想要转达的消息作为邮件的正文。</p>')
 		self.tip2_1.setCursor(QCursor(Qt.PointingHandCursor))
 		self.tip2_1.setStyleSheet(tip_qss)
 		self.tip2_1.setParent(self)
 		self.tip2_1.setGeometry(582, 318, 14, 14)
 		self.tip2_2 = QLabel()
-		self.tip2_2.setToolTip(u'<p>将标签作为邮件的标题，将想执行的CMD命令作为邮件的正文，不要夹杂其他'
-			u'的内容。</p>')
+		self.tip2_2.setToolTip(u'<p>将标签作为邮件的标题，将想执行的CMD命令作为邮件的正文。</p>')
 		self.tip2_2.setCursor(QCursor(Qt.PointingHandCursor))
 		self.tip2_2.setStyleSheet(tip_qss)
 		self.tip2_2.setParent(self)
@@ -325,6 +337,7 @@ class Setting_UI(QWidget):
 		self.tip4_1.setStyleSheet(tip_qss)
 		self.tip4_1.setParent(self)
 		self.tip4_1.setGeometry(337, 113, 14, 14)
+		#设置按钮与链接的鼠标指针为手型
 		self.btn_close.setCursor(QCursor(Qt.PointingHandCursor))
 		self.btn_menu1.setCursor(QCursor(Qt.PointingHandCursor))
 		self.btn_menu2.setCursor(QCursor(Qt.PointingHandCursor))
@@ -335,12 +348,15 @@ class Setting_UI(QWidget):
 		self.btn4_1.setCursor(QCursor(Qt.PointingHandCursor))
 		self.btn_default.setCursor(QCursor(Qt.PointingHandCursor))
 		self.btn_save.setCursor(QCursor(Qt.PointingHandCursor))
+		#初始化组件
 		self.label_title = QLabel()
 		self.label_prompt = QLabel()
 		self.label_opacity = QLabel()
-		self.label1_a = QLabel()
+		self.label1_a = QLabel()	
 		self.label1_1 = QLabel()
+		self.label1_1_a = QLabel()
 		self.label1_2 = QLabel()
+		self.label1_2_a = QLabel()
 		self.label1_3 = QLabel()
 		self.label1_4 = QLabel()
 		self.label1_5 = QLabel()
@@ -381,6 +397,7 @@ class Setting_UI(QWidget):
 		self.label_menu5 = QLabel()
 		self.label_menu6 = QLabel()
 		self.combobox4_1 = QComboBox()
+		#检测摄像头
 		cam = []
 		i = 0
 		while 1:
@@ -410,6 +427,7 @@ class Setting_UI(QWidget):
 		self.check1_2.move(240, 332)
 		self.textedit = QTextEdit()
 		self.textedit.setAcceptRichText(False)
+		#设置组件样式
 		self.btn_close.setStyleSheet(close_qss)
 		self.btn_menu1.setStyleSheet(btn_menu1_qss)
 		self.btn_menu2.setStyleSheet(btn_menu2_qss)
@@ -425,7 +443,9 @@ class Setting_UI(QWidget):
 		self.label_opacity.setStyleSheet(u'QLabel{background:rgba(36, 48, 64, ' + str(opacity) + ')}')
 		self.label1_a.setStyleSheet(label_qss)
 		self.label1_1.setStyleSheet(label_qss)
+		self.label1_1_a.setStyleSheet(label_qss)
 		self.label1_2.setStyleSheet(label_qss)
+		self.label1_2_a.setStyleSheet(label_qss)
 		self.label1_3.setStyleSheet(label_qss)
 		self.label1_4.setStyleSheet(label_qss)
 		self.label1_5.setStyleSheet(label_qss)
@@ -464,7 +484,9 @@ class Setting_UI(QWidget):
 		self.label_menu5.setStyleSheet(label_qss)
 		self.label_menu6.setStyleSheet(label_qss)
 		self.lineedit1_1.setStyleSheet(lineedit_qss)
+		self.lineedit1_1_a.setStyleSheet(lineedit_qss)
 		self.lineedit1_2.setStyleSheet(lineedit_qss)
+		self.lineedit1_2_a.setStyleSheet(lineedit_qss)
 		self.lineedit1_3.setStyleSheet(lineedit_qss)
 		self.lineedit1_4.setStyleSheet(lineedit_qss)
 		self.lineedit1_5.setStyleSheet(lineedit_qss)
@@ -480,6 +502,7 @@ class Setting_UI(QWidget):
 		self.combobox4_1.setStyleSheet(combobox_qss)
 		self.textedit.setStyleSheet(textedit_qss)
 		self.textedit.verticalScrollBar().setStyleSheet(vscrollbar_qss)
+		#设置组件继承关系
 		self.btn_close.setParent(self)
 		self.btn4_1.setParent(self)
 		self.btn_default.setParent(self)
@@ -489,7 +512,9 @@ class Setting_UI(QWidget):
 		self.label_opacity.setParent(self)
 		self.label1_a.setParent(self)
 		self.label1_1.setParent(self)
+		self.label1_1_a.setParent(self)
 		self.label1_2.setParent(self)
+		self.label1_2_a.setParent(self)
 		self.label1_3.setParent(self)
 		self.label1_4.setParent(self)
 		self.label1_5.setParent(self)
@@ -534,7 +559,9 @@ class Setting_UI(QWidget):
 		self.btn_menu5.setParent(self)
 		self.btn_menu6.setParent(self)
 		self.lineedit1_1.setParent(self)
+		self.lineedit1_1_a.setParent(self)
 		self.lineedit1_2.setParent(self)
+		self.lineedit1_2_a.setParent(self)
 		self.lineedit1_3.setParent(self)
 		self.lineedit1_4.setParent(self)
 		self.lineedit1_5.setParent(self)
@@ -549,6 +576,7 @@ class Setting_UI(QWidget):
 		self.combobox3_1.setParent(self)
 		self.combobox4_1.setParent(self)
 		self.textedit.setParent(self)
+		#设置组件位置和尺寸
 		self.btn_close.setGeometry(636, 5, 19, 19)
 		self.btn4_1.setGeometry(210, 370, 104, 34)
 		self.btn_default.setGeometry(166, 430, 91, 34)
@@ -556,9 +584,11 @@ class Setting_UI(QWidget):
 		self.label_title.setGeometry(18, 18, 150, 21)
 		self.label_prompt.setGeometry(370, 437, 200, 20)
 		self.label_opacity.setGeometry(370, 437, 200, 20)
-		self.label1_a.setGeometry(190, 70, 100, 20)
+		self.label1_a.setGeometry(190, 70, 100, 20)		
 		self.label1_1.setGeometry(200, 115, 90, 20)
+		self.label1_1_a.setGeometry(440, 115, 25, 20)
 		self.label1_2.setGeometry(200, 164, 90, 20)
+		self.label1_2_a.setGeometry(440, 164, 25, 20)
 		self.label1_3.setGeometry(200, 213, 90, 20)
 		self.label1_4.setGeometry(200, 262, 90, 20)
 		self.label1_5.setGeometry(210, 370, 200, 20)
@@ -602,8 +632,10 @@ class Setting_UI(QWidget):
 		self.btn_menu4.setGeometry(2, 180, 158, 40)
 		self.btn_menu5.setGeometry(2, 220, 158, 40)
 		self.btn_menu6.setGeometry(2, 260, 158, 40)
-		self.lineedit1_1.setGeometry(300, 108, 220, 34)
-		self.lineedit1_2.setGeometry(300, 157, 220, 34)
+		self.lineedit1_1.setGeometry(300, 108, 130, 34)
+		self.lineedit1_1_a.setGeometry(475, 108, 45, 34)
+		self.lineedit1_2.setGeometry(300, 157, 130, 34)
+		self.lineedit1_2_a.setGeometry(475, 157, 45, 34)
 		self.lineedit1_3.setGeometry(300, 206, 220, 34)
 		self.lineedit1_4.setGeometry(300, 255, 220, 34)
 		self.lineedit1_5.setGeometry(312, 363, 100, 34)
@@ -625,8 +657,10 @@ class Setting_UI(QWidget):
 		self.label_menu6.setText(u'<p>关于</p>')
 		self.label1_a.setText(u'<p style = "font:17px;color:#E9E9E9">基本设置</p>')
 		self.label1_1.setText(u'<p align = right>POP3服务器</p>')
+		self.label1_1_a.setText(u'<p>端口</p>')
 		self.label1_2.setText(u'<p align = right>SMTP服务器</p>')
-		self.label1_3.setText(u'<p align = right>邮箱用户名</p>')
+		self.label1_2_a.setText(u'<p>端口</p>')
+		self.label1_3.setText(u'<p align = right>邮箱地址</p>')
 		self.label1_4.setText(u'<p align = right>授权密码</p>')
 		self.label1_5.setText(u'<p>新邮件检测频率</p>')
 		self.label1_6.setText(u'<p>秒/次</p>')
@@ -636,7 +670,7 @@ class Setting_UI(QWidget):
 		self.label2_3.setText(u'<p>关机</p>')
 		self.label2_4.setText(u'<p>回传屏幕截图</p>')
 		self.label2_5.setText(u'<p>回传摄像头画面</p>')
-		self.label2_6.setText(u'<p>转达你说的话</p>')
+		self.label2_6.setText(u'<p>转达消息</p>')
 		self.label2_7.setText(u'<p>执行CMD命令</p>')
 		self.label3_a.setText(u'<p style = "font:17px;color:#E9E9E9">邮件过滤</p>')
 		if filterlist == "0":
@@ -659,17 +693,22 @@ class Setting_UI(QWidget):
 		self.btn4_1.setText(u'打开预览画面')
 		self.label5_a.setText(u'<p style = "font:17px;color:#E9E9E9">功能简介</p>')
 		self.label5_1.setText(u'<p>1. 远程监视开机情况<br>2. 遥控电脑关机<br>3. 远程监视屏幕<br>'
-			u'4. 远程监视摄像头<br>5. 让电脑转达你说的话<br>6. 远程执行CMD命令</p>')
+			u'4. 远程监视摄像头<br>5. 让电脑转达消息<br>6. 远程执行CMD命令</p>')
 		self.label5_b.setText(u'<p style = "font:17px;color:#E9E9E9">使用方法</p>')
 		self.label5_2.setText(u'<p>首先你需要为你的邮箱开启STMP和POP3服务。<br>'
 			u'<a style = "text-decoration:none;color:#00AEFF" '
-			u'href = "http://service.mail.qq.com/cgi-bin/help?subtype = 1&&id = 28&&no = 166">'
+			u'href = "http://service.mail.qq.com/cgi-bin/help?subtype=1&&id=28&&no=166">'
 			u'QQ邮箱开启方法&nbsp;<img src = "ui/images/link.png"></a>'
 			u'<a style = "text-decoration:none;color:#00AEFF" '
 			u'href = "http://help.163.com/10/0312/13/61J0LI3200752CLQ.html">&nbsp;&nbsp;&nbsp;'
-			u'163邮箱开启方法&nbsp;<img src = "ui/images/link.png"></a>&nbsp;&nbsp;&nbsp;其他邮箱同理。'
-			u'<br>使用时只需要将对应命令的标签作为邮件的标题给自己发邮件即可。<br>'
-			u'具体标签请参考「命令标签」，其中的标签支持自定义。</p>')
+			u'163邮箱开启方法&nbsp;<img src = "ui/images/link.png"></a><br>'
+			u'<a style = "text-decoration:none;color:#00AEFF" '
+			u'href = "http://kf.qq.com/faq/120322fu63YV130422nqIrqu.html">'
+			u'QQ邮箱端口号&nbsp;<img src = "ui/images/link.png"></a>'
+			u'<a style = "text-decoration:none;color:#00AEFF" '
+			u'href = "http://help.163.com/09/1223/14/5R7P3QI100753VB8.html">&nbsp;&nbsp;&nbsp;'
+			u'163邮箱端口号&nbsp;<img src = "ui/images/link.png"></a>'
+			u'<br>使用时只需要将对应命令的标签作为邮件的标题给自己发邮件即可。<br></p>')
 		self.label6_a.setText(u'<p style = "font:17px;color:#E9E9E9">关于</p>')
 		self.label6_1.setText(u'<p>当前版本：%s</p><p>官方网站：<a style = "text-decoration:none;'
 			u'color:#00AEFF" href = "http://jackeriss.com/emp.htm">www.Jackeriss.com/emp.htm '
@@ -682,7 +721,8 @@ class Setting_UI(QWidget):
 			u'的活动。<br>4. 本软件仅用于学习交流，使用过程中出现任何问题都与原作者无关。<br>5. 本软件'
 			u'的著作权归&copy;Jackeriss所有，作者保留所有权利。<br>6. 作者保留对本协议的最终解释权，并'
 			u'有权随时对本协议进行修改。</p>')
-		self.btn_default.setText(u'重设为默认')		
+		self.btn_default.setText(u'重设为默认')	
+		#绑定触发事件	
 		self.btn_close.clicked.connect(self.close_clicked)
 		self.btn_menu1.pressed.connect(self.menu1_pressed)
 		self.btn_menu2.pressed.connect(self.menu2_pressed)
@@ -691,7 +731,9 @@ class Setting_UI(QWidget):
 		self.btn_menu5.pressed.connect(self.menu5_pressed)
 		self.btn_menu6.pressed.connect(self.menu6_pressed)
 		self.lineedit1_1.editingFinished.connect(self.lineedit1_1_edited)
+		self.lineedit1_1_a.editingFinished.connect(self.lineedit1_1_a_edited)
 		self.lineedit1_2.editingFinished.connect(self.lineedit1_2_edited)
+		self.lineedit1_2_a.editingFinished.connect(self.lineedit1_2_a_edited)
 		self.lineedit1_3.editingFinished.connect(self.lineedit1_3_edited)
 		self.lineedit1_4.editingFinished.connect(self.lineedit1_4_edited)
 		self.lineedit1_5.editingFinished.connect(self.lineedit1_5_edited)
@@ -711,7 +753,13 @@ class Setting_UI(QWidget):
 		self.cam_thread = Cam()
 		self.cam_thread.trigger.connect(self.camera)
 		self.server_thread = Server()
-		self.server_thread.trigger.connect(self.server_exception)
+		self.server_thread.trigger1.connect(self.server_trigger1)
+		self.server_thread.trigger2.connect(self.server_trigger2)
+		self.server_thread.trigger3.connect(self.server_trigger3)
+		self.server_thread.trigger4.connect(self.server_trigger4)
+		self.server_thread.trigger5.connect(self.server_trigger5)
+		self.server_thread.trigger6.connect(self.server_trigger6)
+		self.server_thread.trigger7.connect(self.server_trigger7)
 		self.in_thread = In()
 		self.in_thread.trigger.connect(self.trans)
 		self.trans_thread = Trans()
@@ -765,6 +813,7 @@ class Setting_UI(QWidget):
 		self.label6_1.hide()
 		self.label6_b.hide()
 		self.label6_2.hide()
+		#任务栏通知中心菜单设置
 		self.alterAction = QAction(u"开启服务", self, triggered = self.alter)
 		self.boardAction = QAction(u"显示主面板", self, triggered = self.board)
 		self.exitAction = QAction(u"退出", self, triggered = self.exit)
@@ -789,9 +838,12 @@ class Setting_UI(QWidget):
 		screen = QDesktopWidget().screenGeometry()
 		size = self.geometry()
 		self.move((screen.width()-size.width())/2, (screen.height()-size.height())/2)
+
+	#点击关闭按钮时关闭窗口但不退出
 	def closeEvent(self, event):
 		self.hide()
 		event.ignore()
+	#绘制窗口
 	def paintEvent(self, event):
 		global ui_path
 		path = QPainterPath()
@@ -799,21 +851,31 @@ class Setting_UI(QWidget):
 		painter.setRenderHint(QPainter.Antialiasing, True)
 		path.addRoundRect(0, 0, self.width(), self.height(), 0)
 		painter.fillPath(path, QBrush(QPixmap("ui/images/background.png")))
+
+	#鼠标按下事件
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton:
 			self.dragPosition = event.globalPos()-self.frameGeometry().topLeft()
 			event.accept()
+
+	#鼠标移动事件
 	def mouseMoveEvent(self, event):
 		if event.buttons() & Qt.LeftButton:
 			if self.dragPosition != None:
 				if self.dragPosition.y() < 50:
 					self.move(event.globalPos() - self.dragPosition)  
 					event.accept()
+
+	#鼠标弹起事件
 	def mouseReleaseEvent(self, event):
 		self.dragPosition = QPoint(0, 100)
 		event.accept()
+
+	#点击关闭按钮时关闭窗口但不退出
 	def close_clicked(self):
 		self.hide()
+
+	#点击第一个导航时触发
 	def menu1_pressed(self):
 		global current_page
 		current_page = 1
@@ -825,13 +887,17 @@ class Setting_UI(QWidget):
 		self.label_menu6.setText(u'<p>关于</p>')
 		self.label1_a.show()
 		self.label1_1.show()
+		self.label1_1_a.show()
 		self.label1_2.show()
+		self.label1_2_a.show()
 		self.label1_3.show()
 		self.label1_4.show()
 		self.label1_5.show()
 		self.label1_6.show()
 		self.lineedit1_1.show()
+		self.lineedit1_1_a.show()
 		self.lineedit1_2.show()
+		self.lineedit1_2_a.show()
 		self.lineedit1_3.show()
 		self.lineedit1_4.show()
 		self.lineedit1_5.show()
@@ -883,6 +949,8 @@ class Setting_UI(QWidget):
 		self.label6_b.hide()
 		self.label6_2.hide()
 		self.btn_default.show()
+
+	#点击第二个导航时触发
 	def menu2_pressed(self):
 		global current_page
 		current_page = 2
@@ -894,13 +962,17 @@ class Setting_UI(QWidget):
 		self.label_menu6.setText(u'<p>关于</p>')
 		self.label1_a.hide()
 		self.label1_1.hide()
+		self.label1_1_a.hide()
 		self.label1_2.hide()
+		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
+		self.lineedit1_1_a.hide()
 		self.lineedit1_2.hide()
+		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
 		self.lineedit1_5.hide()
@@ -952,6 +1024,8 @@ class Setting_UI(QWidget):
 		self.label6_b.hide()
 		self.label6_2.hide()
 		self.btn_default.show()
+
+	#点击第三个导航时触发
 	def menu3_pressed(self):
 		global current_page
 		current_page = 3
@@ -963,13 +1037,17 @@ class Setting_UI(QWidget):
 		self.label_menu6.setText(u'<p>关于</p>')
 		self.label1_a.hide()
 		self.label1_1.hide()
+		self.label1_1_a.hide()
 		self.label1_2.hide()
+		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
+		self.lineedit1_1_a.hide()
 		self.lineedit1_2.hide()
+		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
 		self.lineedit1_5.hide()
@@ -1024,6 +1102,8 @@ class Setting_UI(QWidget):
 		self.label6_b.hide()
 		self.label6_2.hide()
 		self.btn_default.show()
+
+	#点击第四个导航时触发
 	def menu4_pressed(self):
 		global current_page
 		current_page = 4
@@ -1035,13 +1115,17 @@ class Setting_UI(QWidget):
 		self.label_menu6.setText(u'<p>关于</p>')
 		self.label1_a.hide()
 		self.label1_1.hide()
+		self.label1_1_a.hide()
 		self.label1_2.hide()
+		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
+		self.lineedit1_1_a.hide()
 		self.lineedit1_2.hide()
+		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
 		self.lineedit1_5.hide()
@@ -1093,6 +1177,8 @@ class Setting_UI(QWidget):
 		self.label6_b.hide()
 		self.label6_2.hide()
 		self.btn_default.show()
+
+	#点击第五个导航时触发
 	def menu5_pressed(self):
 		global current_page
 		current_page = 5
@@ -1104,13 +1190,17 @@ class Setting_UI(QWidget):
 		self.label_menu6.setText(u'<p>关于</p>')
 		self.label1_a.hide()
 		self.label1_1.hide()
+		self.label1_1_a.hide()
 		self.label1_2.hide()
+		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
+		self.lineedit1_1_a.hide()
 		self.lineedit1_2.hide()
+		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
 		self.lineedit1_5.hide()
@@ -1162,6 +1252,8 @@ class Setting_UI(QWidget):
 		self.label6_b.hide()
 		self.label6_2.hide()
 		self.btn_default.hide()
+
+	#点击第六个导航时触发
 	def menu6_pressed(self):
 		global current_page
 		current_page = 6
@@ -1173,13 +1265,17 @@ class Setting_UI(QWidget):
 		self.label_menu6.setText(u'<p style = "color:#FFF">关于</p>')
 		self.label1_a.hide()
 		self.label1_1.hide()
+		self.label1_1_a.hide()
 		self.label1_2.hide()
+		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
+		self.lineedit1_1_a.hide()
 		self.lineedit1_2.hide()
+		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
 		self.lineedit1_5.hide()
@@ -1231,30 +1327,50 @@ class Setting_UI(QWidget):
 		self.label6_b.show()
 		self.label6_2.show()
 		self.btn_default.hide()
+
+	#各个QLineedit组件被编辑后触发
 	def lineedit1_1_edited(self):
 		global popserver
 		if popserver != str(unicode(self.lineedit1_1.text(), 'utf-8', 'ignore')):
 			popserver = str(unicode(self.lineedit1_1.text(), 'utf-8', 'ignore'))
 			config.set("mail", "popserver", popserver)
 			self.save()
+
+	def lineedit1_1_a_edited(self):
+		global popport
+		if popport != str(unicode(self.lineedit1_1_a.text(), 'utf-8', 'ignore')):
+			popport = str(unicode(self.lineedit1_1_a.text(), 'utf-8', 'ignore'))
+			config.set("mail", "popport", popport)
+			self.save()
+
 	def lineedit1_2_edited(self):
 		global smtpserver
 		if smtpserver != str(unicode(self.lineedit1_2.text(), 'utf-8', 'ignore')):
 			smtpserver = str(unicode(self.lineedit1_2.text(), 'utf-8', 'ignore'))
 			config.set("mail", "smtpserver", smtpserver)
 			self.save()
+
+	def lineedit1_2_a_edited(self):
+		global smtpport
+		if smtpport != str(unicode(self.lineedit1_2_a.text(), 'utf-8', 'ignore')):
+			smtpport = str(unicode(self.lineedit1_2_a.text(), 'utf-8', 'ignore'))
+			config.set("mail", "smtpport", smtpport)
+			self.save()
+
 	def lineedit1_3_edited(self):
 		global user
 		if user != str(unicode(self.lineedit1_3.text(), 'utf-8', 'ignore')):
 			user = str(unicode(self.lineedit1_3.text(), 'utf-8', 'ignore'))
 			config.set("mail", "user", user)
 			self.save()
+
 	def lineedit1_4_edited(self):
 		global passwd
 		if passwd != str(unicode(self.lineedit1_4.text(), 'utf-8', 'ignore')):
 			passwd = str(unicode(self.lineedit1_4.text(), 'utf-8', 'ignore'))
 			config.set("mail", "passwd", passwd)
 			self.save()
+
 	def lineedit1_5_edited(self):
 		global sleep
 		if sleep != str(unicode(self.lineedit1_5.text(), 'utf-8', 'ignore')):
@@ -1264,36 +1380,42 @@ class Setting_UI(QWidget):
 				self.lineedit1_5.setText(sleep)
 			config.set("settings", "sleep", sleep)
 			self.save()
+
 	def lineedit2_1_edited(self):
 		global tag_shutdown
 		if tag_shutdown != str(unicode(self.lineedit2_1.text(), 'utf-8', 'ignore')):
 			tag_shutdown = str(unicode(self.lineedit2_1.text(), 'utf-8', 'ignore'))
 			config.set("commands", "tag_shutdown", tag_shutdown)
 			self.save()
+
 	def lineedit2_2_edited(self):
 		global tag_screen
 		if tag_screen != str(unicode(self.lineedit2_2.text(), 'utf-8', 'ignore')):
 			tag_screen = str(unicode(self.lineedit2_2.text(), 'utf-8', 'ignore'))
 			config.set("commands", "tag_screen", tag_screen)
 			self.save()
+
 	def lineedit2_3_edited(self):
 		global tag_cam
 		if tag_cam != str(unicode(self.lineedit2_3.text(), 'utf-8', 'ignore')):
 			tag_cam = str(unicode(self.lineedit2_3.text(), 'utf-8', 'ignore'))
 			config.set("commands", "tag_cam", tag_cam)
 			self.save()
+
 	def lineedit2_4_edited(self):
 		global tag_say
 		if tag_say != str(unicode(self.lineedit2_4.text(), 'utf-8', 'ignore')):
 			tag_say = str(unicode(self.lineedit2_4.text(), 'utf-8', 'ignore'))
 			config.set("commands", "tag_say", tag_say)
 			self.save()
+
 	def lineedit2_5_edited(self):
 		global tag_cmd
 		if tag_cmd != str(unicode(self.lineedit2_5.text(), 'utf-8', 'ignore')):
 			tag_cmd = str(unicode(self.lineedit2_5.text(), 'utf-8', 'ignore'))
 			config.set("commands", "tag_cmd", tag_cmd)
 			self.save()
+
 	def btn4_1_clicked(self):
 		global cam_open
 		if cam_open == False:
@@ -1306,17 +1428,25 @@ class Setting_UI(QWidget):
 			cam.pop()
 			cam.append(Device(devnum = cam_no))
 			self.cam_thread.wait()
+
+	#按下“重设为默认”按钮后触发
 	def btn_default_clicked(self):
 		global autostart, startsend, sleep, tag_shutdown, tag_screen, tag_cam, tag_say, \
 		tag_cmd, filterlist, whitelist, blacklist, cam_no
 		if current_page == 1:
+			self.lineedit1_1_a.setText(u"#110")
+			self.lineedit1_2_a.setText(u"25")
 			self.check1_1.setChecked(False)
 			self.check1_2.setChecked(False)
 			self.check1_2.setEnabled(False)
-			self.lineedit1_5.setText(u"0")
+			self.lineedit1_5.setText(u"2")
+			popport = "110"
+			smtpport = "25"
 			autostart = 0
 			startsend = 0
-			sleep = "0"
+			sleep = "2"
+			config.set("mail", "popport", popport)
+			config.set("mail", "smtpport", smtpport)
 			config.set("settings", "autostart", autostart)
 			config.set("settings", "startsend", startsend)
 			config.set("settings", "sleep", sleep)
@@ -1350,6 +1480,8 @@ class Setting_UI(QWidget):
 			cam_no = 0
 			config.set("settings", "cam_no", cam_no)
 		self.save()
+
+	#各QCheckBox的状态有变化时触发
 	def check_change1_1(self):
 		global autostart, startsend
 		if self.check1_1.isChecked() == True:
@@ -1365,6 +1497,7 @@ class Setting_UI(QWidget):
 		config.set("settings", "autostart", autostart)
 		config.set("settings", "startsend", startsend)
 		self.save()
+
 	def check_change1_2(self):
 		global startsend
 		if self.check1_2.isChecked() == True:
@@ -1373,6 +1506,8 @@ class Setting_UI(QWidget):
 			startsend = 0
 		config.set("settings", "startsend", startsend)
 		self.save()
+
+	#各QComboBox的值有变化时触发
 	def combobox_change3_1(self):
 		global filterlist
 		filterlist = str(self.combobox3_1.currentIndex())
@@ -1397,11 +1532,14 @@ class Setting_UI(QWidget):
 				u'命令。</p>')
 		config.set("settings", "filterlist", filterlist)
 		self.save()
+
 	def combobox_change4_1(self):
 		global cam_no
 		cam_no = self.combobox4_1.currentIndex()
 		config.set("settings", "cam_no", cam_no)
 		self.save()
+
+	#self.textedit被编辑后触发
 	def textedit_changed(self):
 		global blacklist, whitelist
 		if self.combobox3_1.currentIndex() == 1:
@@ -1411,6 +1549,8 @@ class Setting_UI(QWidget):
 			whitelist = str(unicode(self.textedit.toPlainText(), 'utf-8', 'ignore'))
 			config.set("settings", "whitelist", whitelist)
 		self.save()
+
+	#摄像头画面预览线程，每次拍照都会触发，用于实时更新摄像头预览画面
 	def camera(self):
 		time.sleep(0.01)
 		try:
@@ -1419,9 +1559,13 @@ class Setting_UI(QWidget):
 				self.label4_2.setPixmap(QPixmap("ui/images/camera.png"))
 		except:
 			pass
+
+	#提示文字淡入淡出，用于更新画面
 	def trans(self):
 		self.label_opacity.setStyleSheet(u'QLabel{background:rgba(36, 48, 64, ' + str(opacity) + '%)}')
 		self.update()
+
+	#保存设置到config.ini
 	def save(self):
 		global new_trans
 		config.write(open("config.ini", "w"))
@@ -1430,50 +1574,71 @@ class Setting_UI(QWidget):
 		new_trans = True
 		time.sleep(0.01)
 		self.trans_thread.start()
-	def server_exception(self):
-		global new_trans, switch_cam
-		if switch_cam == False:
-			if exception_id == 0:
-				self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
-					u'color:#4C8BF5">正在连接邮箱服务器...</p>')
-				new_trans = True
-				time.sleep(0.01)
-				self.in_thread.start()
-			elif exception_id == 1:
-				self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
-					u'color:#DE5347">服务器连接失败！</p>')
-				new_trans = True
-				time.sleep(0.01)
-				self.trans_thread.start()
-				self.stop_server()
-			elif exception_id == 2:
-				self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
-					u'color:#DE5347">用户名或密码错误！</p>')
-				new_trans = True
-				time.sleep(0.01)
-				self.trans_thread.start()
-				self.stop_server()
-			elif exception_id == 3:
-				self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
-					u'color:#DE5347">未知错误！</p>')
-				new_trans = True
-				time.sleep(0.01)
-				self.trans_thread.start()
-				self.stop_server()
-			elif exception_id == 4:
-				self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
-					u'color:#7DFF00">成功连接至服务器！</p>')
-				new_trans = True
-				time.sleep(0.01)
-				self.trans_thread.start()
-		else:
-			switch_cam = True
-			cam.pop()
-			cam.append(Device(devnum = cam_no))
+
+	#正在连接服务器
+	def server_trigger1(self):
+		global new_trans
+		self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
+			u'color:#4C8BF5">正在连接邮箱服务器...</p>')
+		new_trans = True
+		time.sleep(0.01)
+		self.in_thread.start()
+
+	#服务器连接失败
+	def server_trigger2(self):
+		global new_trans
+		self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
+			u'color:#DE5347">服务器连接失败！</p>')
+		new_trans = True
+		time.sleep(0.01)
+		self.trans_thread.start()
+		self.stop_server()
+
+	#用户名或密码错误
+	def server_trigger3(self):
+		global new_trans
+		self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
+			u'color:#DE5347">用户名或密码错误！</p>')
+		new_trans = True
+		time.sleep(0.01)
+		self.trans_thread.start()
+		self.stop_server()
+
+	#未知错误（已成功连接至邮箱服务器，大多是执行命令时的错误）
+	def server_trigger4(self):
+		global new_trans
+		self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
+			u'color:#DE5347">未知错误！</p>')
+		new_trans = True
+		time.sleep(0.01)
+		self.trans_thread.start()
+		self.stop_server()
+
+	#成功连接到服务器
+	def server_trigger5(self):
+		global new_trans
+		self.label_prompt.setText(u'<p align = right style = "font-family:Microsoft YaHei;font:13px;'
+			u'color:#7DFF00">成功连接至服务器！</p>')
+		new_trans = True
+		time.sleep(0.01)
+		self.trans_thread.start()
+
+	#执行拍照命令后关闭摄像头
+	def server_trigger6(self):
+		cam.pop()
+		cam.append(Device(devnum = cam_no))
+
+	#显示转达的消息
+	def server_trigger7(self):
+		self.trayIcon.showMessage(u"Email My PC向您转达：", u"%s" % content)
+
+	#点击任务栏通知中心图标后显示主界面
 	def trayClick(self, reason):
 		if reason == QSystemTrayIcon.Trigger:
 			self.show()
 			self.activateWindow()
+
+	#暂停邮箱服务
 	def stop_server(self):
 		global service, opacity
 		service = False
@@ -1483,7 +1648,8 @@ class Setting_UI(QWidget):
 		self.on_off.setChecked(False)
 		opacity = 100
 		self.label_opacity.setStyleSheet(u'QLabel{background:rgba(36, 48, 64, ' + str(opacity) + '%)}')
-		self.update()
+
+	#继续邮箱服务
 	def start_server(self):
 		global service
 		if popserver != "" and smtpserver != "" and user != "" and passwd != "":
@@ -1499,8 +1665,9 @@ class Setting_UI(QWidget):
 			new_trans = True
 			time.sleep(0.01)
 			self.in_thread.start()
+
+	#切换服务状态
 	def alter(self):
-		global service
 		if service == True:
 			try:
 				self.stop_server()
@@ -1508,19 +1675,22 @@ class Setting_UI(QWidget):
 				pass
 		else:
 			self.start_server()
+
+	#点击“显示主界面”菜单后显示主界面
 	def board(self):
 		self.show()
 		self.activateWindow()
+
+	#退出程序
 	def exit(self):
-		path = os.getcwd() + "\\speak.vbs"
-		if os.path.exists(path):
-			os.remove(path)
 		self.cam_thread.terminate()
 		self.server_thread.terminate()
 		self.in_thread.terminate()
 		self.trans_thread.terminate()
 		self.trayIcon.hide()
 		sys.exit()
+
+#解析新邮件，获取其中的信息
 def get_info(msg, indent = 0):
 	subject = ""
 	addr = ""
@@ -1548,12 +1718,16 @@ def get_info(msg, indent = 0):
 				content = content.decode(charset)
 		else:
 			content = ""
-	return (subject,addr,content)
+	return (subject, addr, content)
+
+#解决邮件中的编码问题
 def decode_str(s):
 	value, charset = decode_header(s)[0]
 	if charset:
 		value = value.decode(charset)
 	return value
+
+#获取邮件的编码信息
 def guess_charset(msg):
 	charset = msg.get_charset()
 	if charset is None:
@@ -1562,6 +1736,8 @@ def guess_charset(msg):
 		if pos >= 0:
 			charset = content_type[pos + 8:].strip()
 	return charset
+
+#设置开机启动快捷方式
 def set_shortcut():
 	startup_path = shell.SHGetPathFromIDList(shell.SHGetSpecialFolderLocation(0,shellcon.CSIDL_STARTUP))
 	shortcut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, \
@@ -1570,17 +1746,21 @@ def set_shortcut():
 	shortcut.SetWorkingDirectory(os.getcwd())
 	shortcut.SetIconLocation(os.getcwd()+"\\ui\\images\\Icon.ico",0)
 	shortcut.QueryInterface(pythoncom.IID_IPersistFile).Save(startup_path+"\\Emai My PC.lnk",0)
+
+#删除开机启动快捷方式
 def del_shortcut():
 	startup_path = shell.SHGetPathFromIDList(shell.SHGetSpecialFolderLocation(0,shellcon.CSIDL_STARTUP))
 	path = startup_path + "\\Emai My PC.lnk"
 	if os.path.exists(path):
 		os.remove(path)
+
+#主函数，读取设置信息，并启动界面
 def main():
-	global config, popserver, smtpserver, user, passwd, autostart, startsend, sleep, cam_no, \
+	global config, popserver, popport, smtpserver, smtpport, user, passwd, autostart, startsend, sleep, cam_no, \
 	filterlist, whitelist, blacklist, tag_shutdown, tag_screen, tag_cam, tag_say, tag_cmd, version, \
-	service, switch_cam
+	service
 	startup_path = shell.SHGetPathFromIDList(shell.SHGetSpecialFolderLocation(0, shellcon.CSIDL_STARTUP))
-	switch_cam = False
+	service = True
 	if os.path.isfile(startup_path + "/Emai My PC.lnk"):
 		autostart = 1
 	else:
@@ -1588,7 +1768,9 @@ def main():
 	config = ConfigParser.ConfigParser()
 	config.read("config.ini")
 	popserver = config.get("mail", "popserver")
+	popport = config.get("mail", "popport")
 	smtpserver = config.get("mail", "smtpserver")
+	smtpport = config.get("mail", "smtpport")
 	user = config.get("mail", "user")
 	passwd = config.get("mail", "passwd")
 	startsend = config.get("settings", "startsend")
@@ -1603,10 +1785,10 @@ def main():
 	tag_say = config.get("commands", "tag_say")
 	tag_cmd = config.get("commands", "tag_cmd")
 	version = config.get("version", "version")
-	service = True
 	app = QApplication(sys.argv)
 	form = Setting_UI()
 	sys.exit(app.exec_())
+
 if __name__ == '__main__':
 	myapp = singleinstance()
 	if myapp.aleradyrunning():
