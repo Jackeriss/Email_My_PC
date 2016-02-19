@@ -120,9 +120,9 @@ class Server(QThread):
 									msg_content = b'\r\n'.join(lines)
 									msg = Parser().parsestr(msg_content)
 									info = get_info(msg)
-									subject = info[0]
-									addr = info[1]
-									content = info[2]
+									subject = info[0].strip()
+									addr = info[1].strip()
+									content = info[2].strip().strip("~!@#$%^&*()_+{}[]''\"\":?><\\/.,|-=")
 									if filterlist == "0" or (filterlist == "1" and not addr in blacklist) or \
 									(filterlist == "2" and addr in whitelist):
 										if tag_shutdown in subject:
