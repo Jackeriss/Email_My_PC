@@ -4,27 +4,24 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
-def send(smtpserver, smtpport, user, passwd, title, msg = None, file_name = None):
-    #邮件头
+def send(smtpserver, smtpport, user, mailto, passwd, title, msg=None, file_name=None):  
     msgRoot = MIMEMultipart('related')
     msgRoot['From'] = "Email_My_PC"
     msgRoot['Subject'] = title
-    #邮件正文（HTML格式）
     if msg != None:
-        msgText = MIMEText('%s'%msg,'html','utf-8')
+        msgText = MIMEText('%s' % msg, 'html', 'utf-8')
         msgRoot.attach(msgText)
-    #邮件附件
     if file_name != None:
-        att = MIMEText(open('%s'%file_name, 'rb').read(), 'base64', 'utf-8')
+        att = MIMEText(open('%s' % file_name, 'rb').read(), 'base64', 'utf-8')
         att["Content-Type"] = 'application/octet-stream'
-        att["Content-Disposition"] = 'attachment; filename="%s"'%file_name
+        att["Content-Disposition"] = 'attachment; filename="%s"' % file_name
         msgRoot.attach(att)
     try_num = 0
     try_max = 10
     while 1:
         try_num += 1
         try:
-            smtp.sendmail(user, user, msgRoot.as_string())
+            smtp.sendmail(user, mailto, msgRoot.as_string())
             break
         except:
             try:
@@ -44,7 +41,6 @@ def send(smtpserver, smtpport, user, passwd, title, msg = None, file_name = None
                 if try_num > try_max:
                     break
                 pass
-    #删除本地附件缓存
     if file_name != None:
         path = os.getcwd() + "\\" + file_name
         if os.path.exists(path):

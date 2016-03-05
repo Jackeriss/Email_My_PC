@@ -1,4 +1,4 @@
-#coding = utf-8
+﻿#coding = utf-8
 from win32event import CreateMutex
 from win32api import CloseHandle, GetLastError
 from winerror import ERROR_ALREADY_EXISTS

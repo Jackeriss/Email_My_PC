@@ -4,8 +4,11 @@ from PIL import Image
 
 class Device:
 
-    def __init__(self, devnum = 0):
+    def __init__(self, devnum=0):
         self.dev = vidcap.new_Dev(devnum, 0)
+
+    def quit(self):
+        del self.dev
 
     #获取当前摄像头名称
     def getDisplayName(self):

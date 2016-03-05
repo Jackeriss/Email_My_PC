@@ -37,7 +37,7 @@ def main():
 				location = location[6:]
 				title = "您的电脑当前有开机动作！"
 				message = "<p>电脑名称：%s</p><p>开机时间：%s</p><p>IP地址：%s</p><p>地理位置：%s</p>" % (pc_name, current_time, ip, location.decode("gb2312").encode("utf8"))
-				send(smtpserver, smtpport, user, passwd, title = title, msg = message)
+				send(smtpserver, smtpport, user, user, passwd, title=title, msg=message)
 	try:
 		os.startfile("Email My PC.exe")
 	except:
