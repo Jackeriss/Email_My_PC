@@ -4,7 +4,7 @@ A PC monitor witch uses e-mail to control and get the results.
 
     OS:Windows
     Python edition:Python2.7
-    Packages:pywin32/email
+    Packages:PyQt4/pywin32/email
 
 ## Screenshots
 ![1](http://7xqs4g.com1.z0.glb.clouddn.com/images/Email_My_PC_1.2.0/1.png)  
