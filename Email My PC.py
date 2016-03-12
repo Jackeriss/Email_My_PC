@@ -1,7 +1,6 @@
 ﻿#coding = utf-8
 import sys
 import time
-import shutil
 import os
 import thread
 import ConfigParser
@@ -225,9 +224,6 @@ class Setting_UI(QWidget):
 		label_bg2_qss_file = open(unicode('ui/styles/label_bg2', 'utf8'), 'r')
 		label_bg2_qss = label_bg2_qss_file.read()
 		label_bg2_qss_file.close()
-		browser_qss_file = open(unicode('ui/styles/browser', 'utf8'), 'r')
-		browser_qss = browser_qss_file.read()
-		browser_qss_file.close()
 		lineedit_qss_file = open(unicode('ui/styles/lineedit', 'utf8'), 'r')
 		lineedit_qss = lineedit_qss_file.read()
 		lineedit_qss_file.close()
@@ -262,7 +258,6 @@ class Setting_UI(QWidget):
 		self.btn_menu6 = QPushButton()
 		self.btn4_1 = QPushButton()
 		self.btn_default = QPushButton()
-		self.btn_save = QPushButton()
 		self.lineedit1_1 = QLineEdit(popserver)
 		self.lineedit1_1.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_1_a = QLineEdit(popport)
@@ -357,7 +352,6 @@ class Setting_UI(QWidget):
 		self.btn_menu6.setCursor(QCursor(Qt.PointingHandCursor))
 		self.btn4_1.setCursor(QCursor(Qt.PointingHandCursor))
 		self.btn_default.setCursor(QCursor(Qt.PointingHandCursor))
-		self.btn_save.setCursor(QCursor(Qt.PointingHandCursor))
 		#初始化组件
 		self.label_title = QLabel()
 		self.label_prompt = QLabel()
@@ -510,7 +504,6 @@ class Setting_UI(QWidget):
 		self.btn_close.setParent(self)
 		self.btn4_1.setParent(self)
 		self.btn_default.setParent(self)
-		self.btn_save.setParent(self)
 		self.label_title.setParent(self)
 		self.label_prompt.setParent(self)
 		self.label_opacity.setParent(self)
@@ -583,7 +576,6 @@ class Setting_UI(QWidget):
 		self.btn_close.setGeometry(636, 5, 19, 19)
 		self.btn4_1.setGeometry(210, 370, 104, 34)
 		self.btn_default.setGeometry(166, 430, 91, 34)
-		self.btn_save.setGeometry(180, 495, 80, 30)
 		self.label_title.setGeometry(18, 18, 150, 21)
 		self.label_prompt.setGeometry(370, 437, 200, 20)
 		self.label_opacity.setGeometry(370, 437, 200, 20)
@@ -1525,12 +1517,12 @@ class Setting_UI(QWidget):
 		self.trans_thread.start()
 
 	#服务器连接失败或用户名或密码错误后自动重连
-	def reconnect1(self, a):
+	def reconnect1(self):
 		time.sleep(60)
 		self.start_server()
 
 	#未知错误后自动重连
-	def reconnect2(self, a):
+	def reconnect2(self):
 		time.sleep(2)
 		self.start_server()
 			
@@ -1552,7 +1544,7 @@ class Setting_UI(QWidget):
 		time.sleep(0.01)
 		self.trans_thread.start()
 		self.stop_server()
-		thread.start_new_thread(self.reconnect1, (self,))
+		thread.start_new_thread(self.reconnect1, ())
 
 	#用户名或密码错误
 	def server_trigger3(self):
@@ -1563,7 +1555,7 @@ class Setting_UI(QWidget):
 		time.sleep(0.01)
 		self.trans_thread.start()
 		self.stop_server()
-		thread.start_new_thread(self.reconnect1, (self,))
+		thread.start_new_thread(self.reconnect1, ())
 
 	#未知错误（已成功连接至邮箱服务器，大多是执行命令时的错误）
 	def server_trigger4(self):
@@ -1574,7 +1566,7 @@ class Setting_UI(QWidget):
 		time.sleep(0.01)
 		self.trans_thread.start()
 		self.stop_server()
-		thread.start_new_thread(self.reconnect2, (self,))
+		thread.start_new_thread(self.reconnect2, ())
 
 	#成功连接到服务器
 	def server_trigger5(self):
