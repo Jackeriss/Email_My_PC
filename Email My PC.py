@@ -39,6 +39,17 @@ class Cam(QThread):
 			except:
 				pass
 
+#重新连接
+class Reconnect(QThread):
+	trigger = pyqtSignal()
+
+	def __init__(self, parent=None):
+		super(Reconnect, self).__init__(parent)
+
+	def run(self):
+		time.sleep(5)
+		self.trigger.emit()
+
 #淡入提示文字
 class In(QThread):
 	trigger = pyqtSignal()
@@ -125,40 +136,7 @@ class Server(QThread):
 									addr = info[1].strip()
 									content = info[2].strip().strip('~!@#$%^&*()_+{}[]\'":?><\\/.,|-=')
 									if addr in whitelist:
-										if tag_shutdown in subject:
-											command = 'shutdown -s'
-											subprocess.Popen('shutdown -s', shell=True)
-											title = '成功执行关机命令！'
-											send(smtpserver, smtpport, user, addr, passwd, title=title)
-										if tag_screen in subject:
-											pic_name = time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
-											pic_name = pic_name + '.jpg'
-											pic = ImageGrab.grab()
-											pic.save('%s' % pic_name)
-											title = '截屏成功！'
-											send(smtpserver, smtpport, user, addr, passwd, title=title, file_name=pic_name)
-										if tag_cam in subject:
-											pic_name = time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
-											pic_name = pic_name + '.jpg'
-											cam[cam_no].getImage().save(pic_name)
-											title = '拍照成功！'
-											send(smtpserver, smtpport, user, addr, passwd, title=title, file_name=pic_name)
-											self.trigger6.emit()
-										if tag_button in subject:
-											unrecognized = button_event(content)
-											if unrecognized == '':
-												title = '成功执行快捷键！'
-												msg = '<p>已成功执行以下快捷键：</p><p>%s</p>' % content.encode("utf8")
-											else:
-												title = '存在无法识别的快捷键！'
-												msg = '<p>您发送的快捷键为“%s”</p><p>其中快捷键“%s”无法识别</p>' \
-												% (content.encode('utf8'), unrecognized.encode('utf8'))
-											send(smtpserver, smtpport, user, addr, passwd, title=title, msg=msg)
-										if tag_cmd in subject:
-											subprocess.Popen(content, shell=True)
-											title = '成功执行CMD命令！'
-											msg = '<p>已成功执行以下命令：</p><p>%s</p>' % content.encode('utf8')
-											send(smtpserver, smtpport, user, addr, passwd, title=title, msg=msg)
+										thread.start_new_thread(self.processing, (p, subject, content, addr))
 						except:
 							self.trigger4.emit()
 						else:
@@ -177,6 +155,42 @@ class Server(QThread):
 				pre_number = -1
 				time.sleep(2)
 			time.sleep(float(sleep))
+
+	def processing(self, p, subject, content, addr):
+		if tag_shutdown in subject:
+			command = 'shutdown -s'
+			subprocess.Popen('shutdown -s', shell=True)
+			title = '成功执行关机命令！'
+			send(smtpserver, smtpport, user, addr, passwd, title=title)
+		if tag_screen in subject:
+			pic_name = time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
+			pic_name = pic_name + '.jpg'
+			pic = ImageGrab.grab()
+			pic.save('%s' % pic_name)
+			title = '截屏成功！'
+			send(smtpserver, smtpport, user, addr, passwd, title=title, file_name=pic_name)
+		if tag_cam in subject:
+			pic_name = time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
+			pic_name = pic_name + '.jpg'
+			cam[cam_no].getImage().save(pic_name)
+			title = '拍照成功！'
+			send(smtpserver, smtpport, user, addr, passwd, title=title, file_name=pic_name)
+			self.trigger6.emit()
+		if tag_button in subject:
+			unrecognized = button_event(content)
+			if unrecognized == '':
+				title = '成功执行快捷键！'
+				msg = '<p>已成功执行以下快捷键：</p><p>%s</p>' % content.encode("utf8")
+			else:
+				title = '存在无法识别的快捷键！'
+				msg = '<p>您发送的快捷键为“%s”</p><p>其中快捷键“%s”无法识别</p>' \
+				% (content.encode('utf8'), unrecognized.encode('utf8'))
+			send(smtpserver, smtpport, user, addr, passwd, title=title, msg=msg)
+		if tag_cmd in subject:
+			subprocess.Popen(content, shell=True)
+			title = '成功执行CMD命令！'
+			msg = '<p>已成功执行以下命令：</p><p>%s</p>' % content.encode('utf8')
+			send(smtpserver, smtpport, user, addr, passwd, title=title, msg=msg)
 
 #主界面
 class Setting_UI(QWidget):
@@ -735,6 +749,8 @@ class Setting_UI(QWidget):
 		self.textedit.textChanged.connect(self.textedit_changed)
 		self.cam_thread = Cam()
 		self.cam_thread.trigger.connect(self.camera)
+		self.reconnect_thread = Reconnect()
+		self.reconnect_thread.trigger.connect(self.start_server)
 		self.server_thread = Server()
 		self.server_thread.trigger1.connect(self.server_trigger1)
 		self.server_thread.trigger2.connect(self.server_trigger2)
@@ -1515,16 +1531,6 @@ class Setting_UI(QWidget):
 		new_trans = True
 		time.sleep(0.01)
 		self.trans_thread.start()
-
-	#服务器连接失败或用户名或密码错误后自动重连
-	def reconnect1(self):
-		time.sleep(60)
-		self.start_server()
-
-	#未知错误后自动重连
-	def reconnect2(self):
-		time.sleep(2)
-		self.start_server()
 			
 	#正在连接服务器
 	def server_trigger1(self):
@@ -1544,7 +1550,7 @@ class Setting_UI(QWidget):
 		time.sleep(0.01)
 		self.trans_thread.start()
 		self.stop_server()
-		thread.start_new_thread(self.reconnect1, ())
+		self.reconnect_thread.start()
 
 	#用户名或密码错误
 	def server_trigger3(self):
@@ -1555,7 +1561,7 @@ class Setting_UI(QWidget):
 		time.sleep(0.01)
 		self.trans_thread.start()
 		self.stop_server()
-		thread.start_new_thread(self.reconnect1, ())
+		self.reconnect_thread.start()
 
 	#未知错误（已成功连接至邮箱服务器，大多是执行命令时的错误）
 	def server_trigger4(self):
@@ -1566,7 +1572,7 @@ class Setting_UI(QWidget):
 		time.sleep(0.01)
 		self.trans_thread.start()
 		self.stop_server()
-		thread.start_new_thread(self.reconnect2, ())
+		self.reconnect_thread.start()
 
 	#成功连接到服务器
 	def server_trigger5(self):
