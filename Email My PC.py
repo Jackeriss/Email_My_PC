@@ -101,13 +101,13 @@ class Server(QThread):
 		super(Server, self).__init__(parent)
 
 	def run(self):
-		p = None
-		count = 0
-		pre_number = -1
 		while 1:
-			if service == True:
+			p = None
+			first = True
+			pre_number = -1
+			while service == True:
 				try:
-					if count == 0:
+					if first == True:
 						self.trigger1.emit()
 					#绝大多数邮箱不开启加密时的POP端口为110
 					if popport == '110':
@@ -148,12 +148,9 @@ class Server(QThread):
 								p.quit()
 							except:
 								self.trigger4.emit()
-				count += 1
-			else:
-				count = 0
-				exception_id = -1
-				pre_number = -1
-				time.sleep(2)
+				first = False
+			exception_id = -1
+			time.sleep(2)
 			time.sleep(float(sleep))
 
 	def processing(self, p, subject, content, addr):
