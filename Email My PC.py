@@ -830,7 +830,7 @@ class Setting_UI(QWidget):
 		self.resize(664, 472)
 		screen = QDesktopWidget().screenGeometry()
 		size = self.geometry()
-		self.move((screen.width()-size.width())/2, (screen.height()-size.height())/2)
+		self.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
 
 	#点击关闭按钮时关闭窗口但不退出
 	def closeEvent(self, event):
