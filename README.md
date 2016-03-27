@@ -1,6 +1,6 @@
 # Email_My_PC
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE.txt) 
-[![versions](https://img.shields.io/badge/versions%20-%20%201.2.2-blue.svg)]() [![platform](https://img.shields.io/badge/platform%20-%20Windows-lightgrey.svg)]() 
+[![versions](https://img.shields.io/badge/versions%20-%20%201.2.2-blue.svg)]() [![platform](https://img.shields.io/badge/platform%20-%20Windows-lightgrey.svg)]()  
 A PC monitor witch uses e-mail to control and get the results.
 ## Environment
 
