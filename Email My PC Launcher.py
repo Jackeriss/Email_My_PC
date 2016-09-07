@@ -13,11 +13,19 @@ def main():
 	config.read("config.ini")
 	smtpserver = config.get("mail", "smtpserver")
 	smtpport = config.get("mail", "smtpport")
-	user = config.get("mail", "user")
-	passwd = config.get("mail", "passwd")
+	secret_user = config.get("mail", "user")
+	user = ""
+	for i in range(0,len(secret_user)):
+		user += chr(ord(secret_user[i]) ^ 7)
+	secret_passwd = config.get("mail", "passwd")
+	passwd = ""
+	for i in range(0,len(secret_passwd)):
+		passwd += chr(ord(secret_passwd[i]) ^ 5)
 	autostart = config.get("settings", "autostart")
 	startsend = config.get("settings", "startsend")
-	if autostart == "1" and startsend == "1":
+	delay = float(config.get("settings", "delay"))
+	if startsend == "1":
+		time.sleep(60 * delay)
 		pc_name = socket.gethostname()
 		current_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 		url = "http://1212.ip138.com/ic.asp"

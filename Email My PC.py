@@ -134,7 +134,7 @@ class Server(QThread):
 									info = get_info(msg)
 									subject = info[0].strip()
 									addr = info[1].strip()
-									content = info[2].strip().strip('~!@#$%^&*()_+{}[]\'":?><\\/.,|-=')
+									content = info[2].strip()
 									if addr in whitelist:
 										thread.start_new_thread(self.processing, (p, subject, content, addr))
 						except:
@@ -272,16 +272,24 @@ class Setting_UI(QWidget):
 		self.lineedit1_1 = QLineEdit(popserver)
 		self.lineedit1_1.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_1_a = QLineEdit(popport)
+		self.lineedit1_1_a.setValidator(QIntValidator(0, 99999, self))
+		self.lineedit1_1_a.setAlignment(Qt.AlignCenter)
 		self.lineedit1_1_a.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_2 = QLineEdit(smtpserver)
 		self.lineedit1_2.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_2_a = QLineEdit(smtpport)
+		self.lineedit1_2_a.setValidator(QIntValidator(0, 99999, self))
+		self.lineedit1_2_a.setAlignment(Qt.AlignCenter)
 		self.lineedit1_2_a.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_3 = QLineEdit(user)
 		self.lineedit1_3.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_4 = QLineEdit(passwd)
 		self.lineedit1_4.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_4.setEchoMode(QLineEdit.Password)
+		self.lineedit1_4_a = QLineEdit(delay)
+		self.lineedit1_4_a.setTextMargins(6, 0, 6, 0)
+		self.lineedit1_4_a.setValidator(QIntValidator(0, 99999, self))
+		self.lineedit1_4_a.setAlignment(Qt.AlignRight)
 		self.lineedit1_5 = QLineEdit(sleep)
 		self.lineedit1_5.setTextMargins(6, 0, 6, 0)
 		self.lineedit1_5.setValidator(QIntValidator(0, 99999, self))
@@ -374,6 +382,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a = QLabel()
 		self.label1_3 = QLabel()
 		self.label1_4 = QLabel()
+		self.label1_4_a_1 = QLabel()
+		self.label1_4_a_2 = QLabel()
 		self.label1_5 = QLabel()
 		self.label1_6 = QLabel()
 		self.label2_a = QLabel()
@@ -458,6 +468,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.setStyleSheet(label_qss)
 		self.label1_3.setStyleSheet(label_qss)
 		self.label1_4.setStyleSheet(label_qss)
+		self.label1_4_a_1.setStyleSheet(label_qss)
+		self.label1_4_a_2.setStyleSheet(label_qss)
 		self.label1_5.setStyleSheet(label_qss)
 		self.label1_6.setStyleSheet(label_qss)
 		self.label2_a.setStyleSheet(label_qss)
@@ -499,6 +511,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.setStyleSheet(lineedit_qss)
 		self.lineedit1_3.setStyleSheet(lineedit_qss)
 		self.lineedit1_4.setStyleSheet(lineedit_qss)
+		self.lineedit1_4_a.setStyleSheet(lineedit_qss)
 		self.lineedit1_5.setStyleSheet(lineedit_qss)
 		self.lineedit2_1.setStyleSheet(lineedit_qss)
 		self.lineedit2_2.setStyleSheet(lineedit_qss)
@@ -525,6 +538,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.setParent(self)
 		self.label1_3.setParent(self)
 		self.label1_4.setParent(self)
+		self.label1_4_a_1.setParent(self)
+		self.label1_4_a_2.setParent(self)
 		self.label1_5.setParent(self)
 		self.label1_6.setParent(self)
 		self.label2_a.setParent(self)
@@ -572,6 +587,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.setParent(self)
 		self.lineedit1_3.setParent(self)
 		self.lineedit1_4.setParent(self)
+		self.lineedit1_4_a.setParent(self)
 		self.lineedit1_5.setParent(self)
 		self.lineedit2_1.setParent(self)
 		self.lineedit2_2.setParent(self)
@@ -597,8 +613,10 @@ class Setting_UI(QWidget):
 		self.label1_2_a.setGeometry(440, 164, 25, 20)
 		self.label1_3.setGeometry(200, 213, 90, 20)
 		self.label1_4.setGeometry(200, 262, 90, 20)
+		self.label1_4_a_1.setGeometry(405, 332, 60, 20)
+		self.label1_4_a_2.setGeometry(525, 332, 30, 20)
 		self.label1_5.setGeometry(210, 370, 200, 20)
-		self.label1_6.setGeometry(422, 370, 100, 20)
+		self.label1_6.setGeometry(367, 370, 100, 20)
 		self.label2_a.setGeometry(190, 70, 100, 20)
 		self.label_bg_2_a.setGeometry(210, 110, 360, 40)
 		self.label_bg_2_1.setGeometry(210, 150, 360, 50)
@@ -644,7 +662,8 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.setGeometry(475, 157, 45, 34)
 		self.lineedit1_3.setGeometry(300, 206, 220, 34)
 		self.lineedit1_4.setGeometry(300, 255, 220, 34)
-		self.lineedit1_5.setGeometry(312, 363, 100, 34)
+		self.lineedit1_4_a.setGeometry(475, 325, 45, 34)
+		self.lineedit1_5.setGeometry(312, 363, 45, 34)
 		self.lineedit2_1.setGeometry(415, 158, 130, 34)
 		self.lineedit2_2.setGeometry(415, 208, 130, 34)
 		self.lineedit2_3.setGeometry(415, 258, 130, 34)
@@ -665,8 +684,10 @@ class Setting_UI(QWidget):
 		self.label1_1_a.setText(u'<p>端口</p>')
 		self.label1_2.setText(u'<p align=right>SMTP服务器</p>')
 		self.label1_2_a.setText(u'<p>端口</p>')
-		self.label1_3.setText(u'<p align=right>邮箱地址</p>')
+		self.label1_3.setText(u'<p align=right>邮箱地址</p>')	
 		self.label1_4.setText(u'<p align=right>授权密码</p>')
+		self.label1_4_a_1.setText(u'<p align=right>启动延迟</p>')
+		self.label1_4_a_2.setText(u'<p align=right>分钟</p>')
 		self.label1_5.setText(u'<p>新邮件检测频率</p>')
 		self.label1_6.setText(u'<p>秒/次</p>')
 		self.label2_a.setText(u'<p style="font:17px;color:#E9E9E9">命令标签</p>')
@@ -706,9 +727,9 @@ class Setting_UI(QWidget):
 			u'<br>使用时只需要将对应命令的标签作为邮件的标题给自己发邮件即可。<br></p>')
 		self.label6_a.setText(u'<p style="font:17px;color:#E9E9E9">关于</p>')
 		self.label6_1.setText(u'<p>当前版本：%s</p><p>官方网站：<a style="text-decoration:none;'
-			u'color:#00AEFF" href="http://jackeriss.com/emp.htm">www.Jackeriss.com/emp.htm '
+			u'color:#00AEFF" href="https://jackeriss.com/emp">www.Jackeriss.com/emp '
 			u'<img src="ui/images/link.png"></a></p><p>软件作者：<a style="text-decoration:none;'
-			u'color:#00AEFF" href="http://jackeriss.com">&copy;Jackeriss '
+			u'color:#00AEFF" href="https://www.jackeriss.com">&copy;Jackeriss '
 			u'<img src="ui/images/link.png"></a></p>'%version)
 		self.label6_b.setText(u'<p style="font:17px;color:#E9E9E9">用户协议</p>')
 		self.label6_2.setText(u'<p>1. 本软件全称“Email My PC”，以下简称“本软件”。<br>'
@@ -731,6 +752,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.editingFinished.connect(self.lineedit1_2_a_edited)
 		self.lineedit1_3.editingFinished.connect(self.lineedit1_3_edited)
 		self.lineedit1_4.editingFinished.connect(self.lineedit1_4_edited)
+		self.lineedit1_4_a.editingFinished.connect(self.lineedit1_4_a_edited)
 		self.lineedit1_5.editingFinished.connect(self.lineedit1_5_edited)
 		self.lineedit2_1.editingFinished.connect(self.lineedit2_1_edited)
 		self.lineedit2_2.editingFinished.connect(self.lineedit2_2_edited)
@@ -886,6 +908,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.show()
 		self.label1_3.show()
 		self.label1_4.show()
+		self.label1_4_a_1.show()
+		self.label1_4_a_2.show()
 		self.label1_5.show()
 		self.label1_6.show()
 		self.lineedit1_1.show()
@@ -894,6 +918,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.show()
 		self.lineedit1_3.show()
 		self.lineedit1_4.show()
+		self.lineedit1_4_a.show()
 		self.lineedit1_5.show()
 		self.tip1_1.show()
 		self.tip1_2.show()
@@ -960,6 +985,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
+		self.label1_4_a_1.hide()
+		self.label1_4_a_2.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
@@ -968,6 +995,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
+		self.lineedit1_4_a.hide()
 		self.lineedit1_5.hide()
 		self.tip1_1.hide()
 		self.tip1_2.hide()
@@ -1034,6 +1062,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
+		self.label1_4_a_1.hide()
+		self.label1_4_a_2.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
@@ -1042,6 +1072,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
+		self.lineedit1_4_a.hide()
 		self.lineedit1_5.hide()
 		self.tip1_1.hide()
 		self.tip1_2.hide()
@@ -1108,6 +1139,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
+		self.label1_4_a_1.hide()
+		self.label1_4_a_2.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
@@ -1116,6 +1149,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
+		self.lineedit1_4_a.hide()
 		self.lineedit1_5.hide()
 		self.tip1_1.hide()
 		self.tip1_2.hide()
@@ -1182,6 +1216,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
+		self.label1_4_a_1.hide()
+		self.label1_4_a_2.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
@@ -1190,6 +1226,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
+		self.lineedit1_4_a.hide()
 		self.lineedit1_5.hide()
 		self.tip1_1.hide()
 		self.tip1_2.hide()
@@ -1256,6 +1293,8 @@ class Setting_UI(QWidget):
 		self.label1_2_a.hide()
 		self.label1_3.hide()
 		self.label1_4.hide()
+		self.label1_4_a_1.hide()
+		self.label1_4_a_2.hide()
 		self.label1_5.hide()
 		self.label1_6.hide()
 		self.lineedit1_1.hide()
@@ -1264,6 +1303,7 @@ class Setting_UI(QWidget):
 		self.lineedit1_2_a.hide()
 		self.lineedit1_3.hide()
 		self.lineedit1_4.hide()
+		self.lineedit1_4_a.hide()
 		self.lineedit1_5.hide()
 		self.tip1_1.hide()
 		self.tip1_2.hide()
@@ -1346,18 +1386,37 @@ class Setting_UI(QWidget):
 		global user, whitelist
 		if user != str(unicode(self.lineedit1_3.text(), 'utf-8', 'ignore')):
 			user = str(unicode(self.lineedit1_3.text(), 'utf-8', 'ignore'))
-			config.set('mail', 'user', user)
+			secret_user = ''
+			for i in range(0,len(user)):
+				secret_user += chr(ord(user[i]) ^ 7)
+			config.set('mail', 'user', secret_user)
 			if whitelist == '':
 				self.textedit.setText(user)
 				whitelist = user
-				config.set('settings', 'whitelist', whitelist)
+				secret_whitelist = ''
+				for i in range(0,len(whitelist)):
+					secret_whitelist += chr(ord(whitelist[i]) ^ 7)
+				config.set('settings', 'whitelist', secret_whitelist)
 			self.save()
 
 	def lineedit1_4_edited(self):
 		global passwd
 		if passwd != str(unicode(self.lineedit1_4.text(), 'utf-8', 'ignore')):
 			passwd = str(unicode(self.lineedit1_4.text(), 'utf-8', 'ignore'))
-			config.set('mail', 'passwd', passwd)
+			secret_passwd = ''
+			for i in range(0,len(passwd)):
+				secret_passwd += chr(ord(passwd[i]) ^ 5)
+			config.set('mail', 'passwd', secret_passwd)
+			self.save()
+
+	def lineedit1_4_a_edited(self):
+		global delay
+		if delay != str(unicode(self.lineedit1_4_a.text(), 'utf-8', 'ignore')):
+			delay = str(unicode(self.lineedit1_4_a.text(), 'utf-8', 'ignore'))
+			if delay == '':
+				delay = '0'
+				self.lineedit1_4_a.setText(delay)
+			config.set('settings', 'delay', delay)
 			self.save()
 
 	def lineedit1_5_edited(self):
@@ -1433,11 +1492,13 @@ class Setting_UI(QWidget):
 			smtpport = '25'
 			autostart = 0
 			startsend = 0
+			delay = '0'
 			sleep = '2'
 			config.set('mail', 'popport', popport)
 			config.set('mail', 'smtpport', smtpport)
 			config.set('settings', 'autostart', autostart)
 			config.set('settings', 'startsend', startsend)
+			config.set('settings', 'delay', delay)
 			config.set('settings', 'sleep', sleep)
 		elif current_page == 2:
 			self.lineedit2_1.setText(u'#shutdown')
@@ -1458,7 +1519,10 @@ class Setting_UI(QWidget):
 		elif current_page == 3:
 			self.textedit.setText(user)
 			whitelist = user
-			config.set('settings', 'whitelist', whitelist)
+			secret_whitelist = ''
+			for i in range(0,len(whitelist)):
+				secret_whitelist += chr(ord(whitelist[i]) ^ 7)
+			config.set('settings', 'whitelist', secret_whitelist)
 		elif current_page == 4:
 			self.combobox4_1.setCurrentIndex(0)
 			cam_no = 0
@@ -1501,7 +1565,10 @@ class Setting_UI(QWidget):
 	def textedit_changed(self):
 		global whitelist
 		whitelist = str(unicode(self.textedit.toPlainText(), 'utf-8', 'ignore'))
-		config.set('settings', 'whitelist', whitelist)
+		secret_whitelist = ''
+		for i in range(0,len(whitelist)):
+			secret_whitelist += chr(ord(whitelist[i]) ^ 7)
+		config.set('settings', 'whitelist', secret_whitelist)
 		self.save()
 
 	#摄像头画面预览线程，每次拍照都会触发，用于实时更新摄像头预览画面
@@ -1750,7 +1817,7 @@ def del_shortcut():
 
 #主函数，读取设置信息，并启动界面
 def main():
-	global config, popserver, popport, smtpserver, smtpport, user, passwd, autostart, startsend, sleep, \
+	global config, popserver, popport, smtpserver, smtpport, user, passwd, autostart, startsend, delay, sleep, \
 	cam_no, whitelist, tag_shutdown, tag_screen, tag_cam, tag_button, tag_cmd, version, \
 	service
 	startup_path = shell.SHGetPathFromIDList(shell.SHGetSpecialFolderLocation(0, shellcon.CSIDL_STARTUP))
@@ -1765,12 +1832,22 @@ def main():
 	popport = config.get('mail', 'popport')
 	smtpserver = config.get('mail', 'smtpserver')
 	smtpport = config.get('mail', 'smtpport')
-	user = config.get('mail', 'user')
-	passwd = config.get('mail', 'passwd')
+	secret_user = config.get('mail', 'user')
+	user = ''
+	for i in range(0,len(secret_user)):
+		user += chr(ord(secret_user[i]) ^ 7)
+	secret_passwd = config.get('mail', 'passwd')
+	passwd = ''
+	for i in range(0,len(secret_passwd)):
+		passwd += chr(ord(secret_passwd[i]) ^ 5)
 	startsend = config.get('settings', 'startsend')
+	delay = config.get('settings', 'delay')
 	sleep = config.get('settings', 'sleep')
 	cam_no = int(config.get('settings', 'cam_no'))
-	whitelist = config.get('settings', 'whitelist')
+	secret_whitelist = config.get('settings', 'whitelist')
+	whitelist = ''
+	for i in range(0,len(secret_whitelist)):
+		whitelist += chr(ord(secret_whitelist[i]) ^ 7)
 	tag_shutdown = config.get('commands', 'tag_shutdown')
 	tag_screen = config.get('commands', 'tag_screen')
 	tag_cam = config.get('commands', 'tag_cam')
