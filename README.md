@@ -1,6 +1,6 @@
 # Email_My_PC
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE.txt) 
-[![versions](https://img.shields.io/badge/versions%20-%20%201.2.3-blue.svg)]() [![platform](https://img.shields.io/badge/platform%20-%20Windows-lightgrey.svg)]()  
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-)](LICENSE.txt) 
+[![versions](https://img.shields.io/badge/versions%20-%20%201.2.3-blue.svg?style=flat-)]() [![platform](https://img.shields.io/badge/platform%20-%20Windows-lightgrey.svg?style=flat-)]()  
 通过邮件远程监控你的电脑  
 ## 运行环境
 
