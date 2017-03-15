@@ -9,7 +9,7 @@
     Packages:PyQt4/pywin32
 
 ## 截图
-![2](http://image.jackeriss.com/project/Email_My_PC/2.png)  
+![1](https://ooo.0o0.ooo/2017/03/15/58c9338d443a6.png)  
 # 使用指南
 ## 引言
 本软件基本的使用流程是用户在软件中配置好自己的邮箱后即可通过给这个邮箱发命令的方式来监视、控制电脑。具体操作如下：
