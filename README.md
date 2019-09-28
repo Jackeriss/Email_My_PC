@@ -2,12 +2,8 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.txt) 
 [![versions](https://img.shields.io/badge/versions%20-%20%201.2.3-blue.svg?style=flat-square)]() [![platform](https://img.shields.io/badge/platform%20-%20Windows-lightgrey.svg?style=flat-square)]()  
 通过邮件远程监控你的电脑  
-## 运行环境
-
-    OS:Windows
-    Python edition:Python2.7
-    Packages:PyQt4/pywin32
-
+## 下载
+[for Windows](http://download.jackeriss.com/works/Email_My_PC_1.2.3.zip)
 ## 截图
 ![1](https://ooo.0o0.ooo/2017/03/15/58c9338d443a6.png)  
 # 使用指南
